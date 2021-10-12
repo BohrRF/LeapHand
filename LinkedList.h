@@ -88,6 +88,7 @@ public:
         pointer = new node;
         pointer->next = pointer;
         pointer->before = pointer;
+        first = last = pointer;
 
         auto temp_ptr = pointer;
         for (int i = 1; i < length; i++)

@@ -91,7 +91,10 @@ void SampleListener::onFrame(const Controller& controller) {
 #ifndef OLD
 const int SPECLEN = 5;
 void SampleListener::onFrame(const Controller& controller) {
-    HandList hands = controller.frame().hands();
+    const HandList &hands = controller.frame().hands();
+    // Get fingers
+    const FingerList &fingers = hands.rightmost().fingers();
+
     //int64_t soundEndTime = 0;
     bool soundOn = false;
     bool ifKeepE = false;
@@ -124,10 +127,20 @@ void SampleListener::onFrame(const Controller& controller) {
     }
     else
     {
-        fp << curTimeStamp << '\t' << hands.rightmost().palmPosition().x << '\t' << hands.rightmost().palmPosition().y;
+        float indexFingerX = fingers[1].bone(Bone::TYPE_DISTAL).nextJoint().x;
+        float indexFingerY = fingers[1].bone(Bone::TYPE_DISTAL).nextJoint().y;
+        float palmX = hands.rightmost().palmPosition().x;
+        float palmY = hands.rightmost().palmPosition().y;
+        float wristX = hands.rightmost().arm().wristPosition().x;
+        float wristY = hands.rightmost().arm().wristPosition().y;
+        
+        fp << curTimeStamp << '\t' 
+           << indexFingerX << '\t' << indexFingerY << '\t' 
+           << palmX        << '\t' << palmY        << '\t'
+           << wristX       << '\t' << wristY;
 
-        //double temp = hands.rightmost().palmPosition().y - controller.frame(1).hands().rightmost().palmPosition().y * 1.0;
-        fft.push(curTimeStamp, hands.rightmost().palmPosition().x, hands.rightmost().palmPosition().y);
+        fft.push(curTimeStamp, palmX, palmY);
+        fingerPosList.push(curTimeStamp, indexFingerX, indexFingerY);
 
         //cout << "Current Position: " << hands.rightmost().palmPosition().y << '\n';
         //cout << "Current Speed: " << fft.history(0).speed << '\n';
@@ -144,10 +157,10 @@ void SampleListener::onFrame(const Controller& controller) {
             //printf("%f, %f\n", maxlist[i], 60 * maxlist[i]);
         }
           
-        const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
+        //const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
         //cout << "Variance: " << var << '\n';
 
-        if (controller.frame(1).hands().rightmost().palmPosition().y < fft.history().position.y)
+        if (fft.history(1).position.y < fft.history().position.y)
         {
             if (!isLowest)
             {
@@ -163,11 +176,11 @@ void SampleListener::onFrame(const Controller& controller) {
                 //cout << hand_peak - hands.rightmost().palmPosition().y << endl;
                 
 
-                auto accl_temp = fft.calCurAccel(lastPeakTimeStamp);
+                auto accl_temp = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
                 fp << '\t' << accl_temp;
 
                 con.onBeat (curTimeStamp, 60 * maxlist[0], 
-                            1.0*hand_peak - hands.rightmost().palmPosition().y, 
+                            hand_peak - fft.history().position.y,
                             accl_temp);
                 isLowest = true;
             }
@@ -179,12 +192,12 @@ void SampleListener::onFrame(const Controller& controller) {
 
         con.refresh(curTimeStamp);
 
-        if (controller.frame(1).hands().rightmost().palmPosition().y > fft.history().position.y)
+        if (fft.history(1).position.y > fft.history().position.y)
         {
             if (!isHighest)
             {
                 lastPeakTimeStamp = curTimeStamp;
-                hand_peak = controller.frame(1).hands().rightmost().palmPosition().y;
+                hand_peak = fft.history(1).position.y;
                 isHighest = true;
             }
         }

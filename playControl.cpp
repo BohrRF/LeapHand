@@ -85,6 +85,7 @@ void control::onBeat(const int64_t& curTimeStamp, const double & bpm ,const doub
     curVelocityFactor = hand_amp / STDRANGE;//TODO change it into factor form
     curAccel = hand_accel;
     cout << "curAccel " << curAccel << endl;
+
     curSpanFactor = curAccel / STDACCEL;//TODO scale this
     curBpm = (abs(bpm - curBpm) > 5) ? bpm : curBpm;
     
@@ -99,7 +100,7 @@ void control::onBeat(const int64_t& curTimeStamp, const double & bpm ,const doub
         node_ptr = beat_ptr->tickSet.begin();
        
         // in case the first note isn't at the first place of this beat
-        curNodeTimeStamp = curTimeStamp + node_ptr->tickOffset * 1000000 * (60 / curBpm) / beat_ptr->tickBeatLength;
+        curNodeTimeStamp = curTimeStamp + node_ptr->tickOffset * 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
     }
 
     refresh(curTimeStamp);
@@ -114,7 +115,7 @@ void control::refresh(const int64_t& curTimeStamp)
 
     if (curTimeStamp >= curNodeTimeStamp)
     {
-        int64_t nsPerTick = 1000000 * (60 / curBpm) / beat_ptr->tickBeatLength;
+        int64_t nsPerTick = 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
 
         for (auto& n : node_ptr->notes)
         {

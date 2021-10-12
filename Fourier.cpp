@@ -173,18 +173,21 @@ double Fourier::getSpeedVariance(const int64_t& tm) const
 }
 
 
-int64_t Fourier::calCurAccel(int64_t startTimeStamp)
+double Fourier::calCurAccel(const int64_t &startTimeStamp, const Clist &list) const
 {
     std::vector<std::pair<int64_t, double>> speed_ary;
-    data_list.readSpeed(speed_ary);
+    list.readSpeed(speed_ary);
     if (speed_ary.empty())
         return 0;
 
 
-    int64_t curTime = 0, endTime = 0;
+    double low_temp = (speed_ary.begin() + 1)->second;
+    double max_temp = 0;
+
+    int64_t curTime;
+    int64_t endTime;
     curTime = endTime = speed_ary.front().first;
 
-    double max_temp = 0;
     for (auto it = speed_ary.begin() + 1; it->first > startTimeStamp && it != speed_ary.end() - 1; it++)
     {  
         if (it->second > max_temp)
@@ -193,7 +196,7 @@ int64_t Fourier::calCurAccel(int64_t startTimeStamp)
             max_temp = it->second;
         }
     }
-    return curTime - endTime;
+    return 1e6 * (max_temp - low_temp) / (curTime - endTime);
 
 }
 

@@ -26,13 +26,13 @@ public:
     bool isLowest;
     bool isHighest;
     control con;
-    Clist notes;
     LINK ptr;
     float hand_peak;
     fstream fp;
+    Clist fingerPosList;
 
     void showFrameInfo(const Controller& controller);
-    beatAnalyze() : beats(0), startTimePoint(0), isLowest(false), isHighest(0), fft(N), notes(8), hand_peak(0)
+    beatAnalyze() : beats(0), startTimePoint(0), isLowest(false), isHighest(0), fft(N), hand_peak(0), fingerPosList(N)
     {
         con.initial_music();
         fp.open("soft.txt", std::ios::out);
