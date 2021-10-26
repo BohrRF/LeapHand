@@ -105,7 +105,7 @@ void SampleListener::onFrame(const Controller& controller) {
     {
         if (!ifKeepE)
         {
-            con.playState = true;
+            con.playState = 1;
             ifKeepE = true;
         }
     }
@@ -113,6 +113,7 @@ void SampleListener::onFrame(const Controller& controller) {
     {
         ifKeepE = false;
     }
+
     if (GetAsyncKeyState(VK_RETURN) & 0x8000)
     {
         fft.reset();
@@ -128,12 +129,30 @@ void SampleListener::onFrame(const Controller& controller) {
     else
     {
         float indexFingerX = fingers[1].bone(Bone::TYPE_DISTAL).nextJoint().x;
-        float indexFingerY = fingers[1].bone(Bone::TYPE_DISTAL).nextJoint().y;
+        float indexFingerY = fingers[1].bone(Bone::TYPE_DISTAL).nextJoint().y;  
         float palmX = hands.rightmost().palmPosition().x;
         float palmY = hands.rightmost().palmPosition().y;
         float wristX = hands.rightmost().arm().wristPosition().x;
         float wristY = hands.rightmost().arm().wristPosition().y;
         
+        
+        if (hands.rightmost().grabAngle() > 2.9)
+        {
+            con.playState = 0;
+            con.resetBeat();
+            fft.reset();
+            return;
+        }
+        else if (con.playState == 0)
+        {
+            con.playState = 1;
+            con.beat_count = 0;
+        }
+        else
+        {
+            
+        }
+            
         fp << curTimeStamp << '\t' 
            << indexFingerX << '\t' << indexFingerY << '\t' 
            << palmX        << '\t' << palmY        << '\t'
@@ -146,15 +165,15 @@ void SampleListener::onFrame(const Controller& controller) {
         //cout << "Current Speed: " << fft.history(0).speed << '\n';
 
         fft.FFT();
-        double maxlist[SPECLEN];
+        std::vector<std::pair<double, double>> maxlist;
 
-        fft.find_max_freq(maxlist, SPECLEN); // 0 Hz amplitude was eliminated from this list
+        fft.find_max_freq(maxlist); // 0 Hz amplitude was eliminated from this list
 
         //cout << "cur time: " << curTimeStamp << " period: " << 8LL * 1000000 / maxlist[0] << '\n';
-        //system("cls");
+        system("cls");
         for (int i = 0; i < SPECLEN; i++)
         {
-            //printf("%f, %f\n", maxlist[i], 60 * maxlist[i]);
+            printf("%f, %f\n", 60*maxlist[i].first, maxlist[i].second);
         }
           
         //const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
@@ -164,10 +183,22 @@ void SampleListener::onFrame(const Controller& controller) {
         {
             if (!isLowest)
             {
+                if (con.playState == 1)
+                {
+                    if (fft.freqAvalible())
+                    {
+                        if (con.beat_count >= con.getMusicInfo().first)
+                        {
+                            con.playState = 2;
+                        }
+                        else
+                            con.beat_count++;
+                    }
+                    else
+                        con.beat_count = 0;
+                }
 
-
-
-                system("cls");
+                //system("cls");
 
 
 
@@ -179,7 +210,7 @@ void SampleListener::onFrame(const Controller& controller) {
                 auto accl_temp = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
                 fp << '\t' << accl_temp;
 
-                con.onBeat (curTimeStamp, 60 * maxlist[0], 
+                con.onBeat (curTimeStamp, 60 * maxlist[0].first, 
                             hand_peak - fft.history().position.y,
                             accl_temp);
                 isLowest = true;

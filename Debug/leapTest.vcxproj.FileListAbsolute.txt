@@ -1,0 +1,2 @@
+C:\Users\hklab\source\repos\leapTest\Debug\leapTest.exe
+C:\Users\hklab\source\repos\leapTest\Debug\leapTest.pdb

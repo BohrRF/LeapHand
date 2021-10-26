@@ -113,9 +113,9 @@ int Fourier::getListLength() const
     return data_list.n_count;
 }
 
-void Fourier::find_max_freq(double list[], const int &n) const
+void Fourier::find_max_freq(std::vector<std::pair<double, double>> &spec_with_freq) const
 {
-    std::vector<std::pair<double, double>> spec_with_freq;
+    
     int64_t span = data_list.last->data.timestamp - data_list.first->data.timestamp;
     double sample_freq = 1000000.0 * (data_list.n_count - 1.0) / span;
     /*
@@ -129,8 +129,6 @@ void Fourier::find_max_freq(double list[], const int &n) const
     std::sort(spec_with_freq.begin(), spec_with_freq.end(), [](const std::pair<int, double> &lval, const std::pair<int, double>& rval) {
                                                                 return lval.second > rval.second;
                                                             });
-    for (int i = 0; i < n; i++)
-        list[i] = spec_with_freq[i].first;
 }
 
 std::unique_ptr<double[]> Fourier::getSpec() const
@@ -200,4 +198,9 @@ double Fourier::calCurAccel(const int64_t &startTimeStamp, const Clist &list) co
 
 }
 
-
+bool Fourier::freqAvalible()
+{
+    std::pair<double, double> data[N];
+    data_list.readXY(data, N);
+    return true;
+}

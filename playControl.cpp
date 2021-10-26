@@ -64,6 +64,12 @@ void control::printMusic()
     }
 }
 
+std::pair<int, int> control::getMusicInfo()
+{
+    std::pair<int, int> timesig = std::make_pair(beat_ptr->timeSigniture_num, beat_ptr->timeSigniture_den);
+    return timesig;
+}
+
 int64_t control::calBeatLen()
 {
     return 1000000 * (60 / curBpm);
@@ -72,6 +78,13 @@ int64_t control::calBeatLen()
 void control::resetPlayState()
 {
     beat_ptr = music.beatSet.begin();
+    node_ptr = beat_ptr->tickSet.begin();
+    playState = false;
+    onPlayList.clear();
+}
+
+void control::resetBeat()
+{
     node_ptr = beat_ptr->tickSet.begin();
     playState = false;
     onPlayList.clear();
@@ -103,13 +116,13 @@ void control::onBeat(const int64_t& curTimeStamp, const double & bpm ,const doub
         curNodeTimeStamp = curTimeStamp + node_ptr->tickOffset * 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
     }
 
-    refresh(curTimeStamp);
+    refresh(curTimeStamp, hand_amp);
 }
 
-void control::refresh(const int64_t& curTimeStamp)
+void control::refresh(const int64_t& curTimeStamp, const double& hand_amp)
 {
     //cout << curTimeStamp << " " << curBpm << endl;
-    if (!playState) return;
+    if (playState != 2) return;
 
     bool isListChange = false;
 
@@ -150,12 +163,16 @@ void control::refresh(const int64_t& curTimeStamp)
 
                                      // first node offset in new beat + previous beat length - last beat offtset in previous beat
                 curNodeTimeStamp = curTimeStamp + (node_ptr->tickOffset + beatLengthTemp - offSetTemp) * nsPerTick;
+                if (hand_amp < 50)
+                    playState = 3;
+                ///TODO: stop the replay, go to (pause processing sequence) OR (a tempo and start right after next hand beat)
             }
         }
         else
         {
             // note that node_ptr has already been moved to the next during calculating the condition
             curNodeTimeStamp = curTimeStamp + (node_ptr->tickOffset - offSetTemp) * nsPerTick;
+            
         }     
     }
 

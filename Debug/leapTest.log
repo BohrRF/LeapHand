@@ -1,0 +1,36 @@
+﻿  Fourier.cpp
+C:\Users\hklab\source\repos\leapTest\Fourier.cpp(1,1): warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\utility(221,16): warning C4244: '初期化中': 'const _Ty1' から '_Ty1' への変換です。データが失われる可能性があります。
+          with
+          [
+              _Ty1=double
+          ]
+          and
+          [
+              _Ty1=int
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\algorithm(4044): message : コンパイル対象の関数 テンプレート インスタンス化 'std::pair<int,double>::pair<double,double,0>(const std::pair<double,double> &) noexcept' のリファレンスを確認してください
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\algorithm(4043): message : コンパイル対象の関数 テンプレート インスタンス化 'std::pair<int,double>::pair<double,double,0>(const std::pair<double,double> &) noexcept' のリファレンスを確認してください
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\algorithm(4119): message : コンパイル対象の関数 テンプレート インスタンス化 'std::pair<_RanIt,_RanIt> std::_Partition_by_median_guess_unchecked<_RanIt,_Pr>(_RanIt,_RanIt,_Pr)' のリファレンスを確認してください
+          with
+          [
+              _RanIt=std::pair<double,double> *,
+              _Pr=Fourier::find_max_freq::<lambda_f3d09336b796cf7083e5ca27a90c2b86>
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\algorithm(4138): message : コンパイル対象の関数 テンプレート インスタンス化 'void std::_Sort_unchecked<std::pair<double,double>*,_Fn>(_RanIt,_RanIt,int,_Pr)' のリファレンスを確認してください
+          with
+          [
+              _Fn=Fourier::find_max_freq::<lambda_f3d09336b796cf7083e5ca27a90c2b86>,
+              _RanIt=std::pair<double,double> *,
+              _Pr=Fourier::find_max_freq::<lambda_f3d09336b796cf7083e5ca27a90c2b86>
+          ]
+C:\Users\hklab\source\repos\leapTest\Fourier.cpp(131): message : コンパイル対象の関数 テンプレート インスタンス化 'void std::sort<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,Fourier::find_max_freq::<lambda_f3d09336b796cf7083e5ca27a90c2b86>>(const _RanIt,const _RanIt,_Pr)' のリファレンスを確認してください
+          with
+          [
+              _Ty=std::pair<double,double>,
+              _RanIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<std::pair<double,double>>>>,
+              _Pr=Fourier::find_max_freq::<lambda_f3d09336b796cf7083e5ca27a90c2b86>
+          ]
+  leapTest.vcxproj -> C:\Users\hklab\source\repos\leapTest\Debug\leapTest.exe
+  C:\Program Files (x86)\Microsoft Visual Studio\LeapSDK\lib\x86\Leap.dll
+  1 個のファイルをコピーしました
