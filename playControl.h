@@ -52,7 +52,7 @@ public:
     void resetBeat();
 
     void onBeat(const int64_t& curTimeStamp, const double & bpm,const double& hand_amp, const double& hand_accel);
-    void refresh(const int64_t& curTimeStamp);
+    void refresh(const int64_t& curTimeStamp, const double& hand_amp);
 };
 
 #endif // PLAYCONTROL_H_INCLUDED

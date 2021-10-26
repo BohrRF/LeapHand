@@ -221,7 +221,7 @@ void SampleListener::onFrame(const Controller& controller) {
             isLowest = false;         
         }
 
-        con.refresh(curTimeStamp);
+        con.refresh(curTimeStamp, hand_peak - fft.history().position.y);
 
         if (fft.history(1).position.y > fft.history().position.y)
         {
