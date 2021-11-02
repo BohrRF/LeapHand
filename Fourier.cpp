@@ -92,6 +92,8 @@ void Fourier::push(const int64_t& time, const double& posx, const double& posy)
 
 void Fourier::reset()
 {
+    for (int i = 0; i < N; i++)
+        x[i] = 0;
     data_list.clear();
     average = 0;
 }
@@ -117,16 +119,16 @@ void Fourier::find_max_freq(std::vector<std::pair<double, double>> &spec_with_fr
 {
     
     int64_t span = data_list.last->data.timestamp - data_list.first->data.timestamp;
-    double sample_freq = 1000000.0 * (data_list.n_count - 1.0) / span;
-    /*
+    double sample_freq = ((double)data_list.n_count - 1.0) / ((double)span / 1000000.0);
+    
     std::cout << "Saved Frame Number:" << data_list.n_count << '\n';
     std::cout << "Time Span: " << span << '\n';
     std::cout << "Sample Frequency:" << sample_freq << "\n\n";
-    */
+    
     for (int i = 1; i < N / 2; i++)
-        spec_with_freq.push_back(std::make_pair(i * sample_freq / N, x[i].norm()));
+        spec_with_freq.push_back(std::make_pair((double)i * sample_freq / (double)N, x[i].norm()));
 
-    std::sort(spec_with_freq.begin(), spec_with_freq.end(), [](const std::pair<int, double> &lval, const std::pair<int, double>& rval) {
+    std::sort(spec_with_freq.begin(), spec_with_freq.end(), [](const std::pair<double, double> &lval, const std::pair<double, double>& rval) {
                                                                 return lval.second > rval.second;
                                                             });
 }
@@ -203,4 +205,21 @@ bool Fourier::freqAvalible()
     std::pair<double, double> data[N];
     data_list.readXY(data, N);
     return true;
+}
+
+
+double Fourier::calHightRatio() const
+{
+    std::vector<double> hight_list;
+    data_list.readY(hight_list);
+    double min, max;
+    if (hight_list.empty())
+        return 0;
+    min = max = hight_list.front();
+    for (auto hight : hight_list)
+    {
+        if (hight < min) min = hight;
+        if (hight > max) max = hight;
+    }
+    return (hight_list.front() - min) / (max - min);
 }

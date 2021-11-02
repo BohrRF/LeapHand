@@ -89,7 +89,7 @@ void SampleListener::onFrame(const Controller& controller) {
 #endif // DEBUG
 
 #ifndef OLD
-const int SPECLEN = 5;
+const int SPECLEN = 20;
 void SampleListener::onFrame(const Controller& controller) {
     const HandList &hands = controller.frame().hands();
     // Get fingers
@@ -178,6 +178,7 @@ void SampleListener::onFrame(const Controller& controller) {
           
         //const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
         //cout << "Variance: " << var << '\n';
+       
 
         if (fft.history(1).position.y < fft.history().position.y)
         {
@@ -220,15 +221,14 @@ void SampleListener::onFrame(const Controller& controller) {
         {
             isLowest = false;         
         }
-
-        con.refresh(curTimeStamp, hand_peak - fft.history().position.y);
+        con.refresh(curTimeStamp, fft);
 
         if (fft.history(1).position.y > fft.history().position.y)
         {
             if (!isHighest)
             {
-                lastPeakTimeStamp = curTimeStamp;
                 hand_peak = fft.history(1).position.y;
+                lastPeakTimeStamp = curTimeStamp;
                 isHighest = true;
             }
         }
@@ -236,7 +236,7 @@ void SampleListener::onFrame(const Controller& controller) {
         {
             isHighest = false;
         }
-        //take standard diviation per 8 beats
+       
         fp << endl;
     }
     

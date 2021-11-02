@@ -91,56 +91,78 @@ void control::resetBeat()
 }
 
 const double STDRANGE = 300.0;
-const double STDACCEL = 100000;
+const double STDACCEL = 10;
 
 void control::onBeat(const int64_t& curTimeStamp, const double & bpm ,const double& hand_amp, const double& hand_accel)
 {
-    curVelocityFactor = hand_amp / STDRANGE;//TODO change it into factor form
+    if (hand_amp < 10) return;
+    curVelocityFactor = hand_amp/STDRANGE;//TODO change it into factor form
     curAccel = hand_accel;
+    /*
+    system("cls");
     cout << "curAccel " << curAccel << endl;
+    cout << "curhandamp" << hand_amp << endl;
+    cout << "curBPM" << bpm << endl;
+    */
+    curSpanFactor = STDACCEL / curAccel;//TODO scale this
+    curBpm = bpm;
 
-    curSpanFactor = curAccel / STDACCEL;//TODO scale this
-    curBpm = (abs(bpm - curBpm) > 5) ? bpm : curBpm;
+    if (playState == 3) playState = 2;
     
     if (!autoplayMode) 
     {
         // there is some same operation in freash but this meant to excecute no matter node_ptr reached the end of this beat or not
-        if (++beat_ptr == music.beatSet.end())
+        if (beat_ptr != music.beatSet.begin() && ++beat_ptr == music.beatSet.end())
         {
             beat_ptr = music.beatSet.begin();
-            if (!musicLoop) playState = false;
+            if (!musicLoop) playState = 0;
         }
         node_ptr = beat_ptr->tickSet.begin();
        
         // in case the first note isn't at the first place of this beat
         curNodeTimeStamp = curTimeStamp + node_ptr->tickOffset * 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
     }
-
-    refresh(curTimeStamp, hand_amp);
 }
 
-void control::refresh(const int64_t& curTimeStamp, const double& hand_amp)
+void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
 {
+    
     //cout << curTimeStamp << " " << curBpm << endl;
-    if (playState != 2) return;
+    
+    /*isBeatEnter => waiting for next Beat, set to true every onbeat()
+    * curTimeStamp > lastBeatTimeStamp + 1e6 * (60.0 / curBpm) => if next beat should already came
+    * hand_amp < 40 => hand_amp is too small to recongnized as a beat is comming
+    */
+    if (isBeatEnter && curTimeStamp > nextBeatTimeStamp)
+    { 
+        //cout << "hight ratio " << fft.calHightRatio() << endl;
+        if (fft.calHightRatio() > 0.7)
+        {
+            playState = 2;
+        }
+        isBeatEnter = false;
+    }
+    
+    ///TODO: stop the replay, go to (pause processing sequence) OR (a tempo and start right after next hand beat)
 
+
+    if (playState != 2) return;
     bool isListChange = false;
 
     if (curTimeStamp >= curNodeTimeStamp)
     {
-        int64_t nsPerTick = 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
+        int64_t nsPerTick = 1e6 * (60.0 / curBpm) / beat_ptr->tickBeatLength;
 
         for (auto& n : node_ptr->notes)
         {
             //play
             //cout << "c " << n.channel << ' ' << "n " << n.number << ' ' << "t " << n.tickSpan << ' ' << "v " << n.velocity << '\n' << endl;
-            cout << n.velocity * curVelocityFactor << endl;
+            //cout << n.velocity * curVelocityFactor << endl;
 
             playSound.noteOn(n.number, n.velocity * curVelocityFactor);
             onPlayNote noteTemp;
             noteTemp.onNote = n;
             noteTemp.endTimeStamp = curTimeStamp + n.tickSpan * nsPerTick * curSpanFactor;
-
             cout <<"time stamp" << curTimeStamp << " span" << n.tickSpan * nsPerTick * curSpanFactor << endl;
 
             onPlayList.emplace_back(noteTemp);
@@ -163,17 +185,15 @@ void control::refresh(const int64_t& curTimeStamp, const double& hand_amp)
 
                                      // first node offset in new beat + previous beat length - last beat offtset in previous beat
                 curNodeTimeStamp = curTimeStamp + (node_ptr->tickOffset + beatLengthTemp - offSetTemp) * nsPerTick;
-                if (hand_amp < 50)
-                    playState = 3;
-                ///TODO: stop the replay, go to (pause processing sequence) OR (a tempo and start right after next hand beat)
+                nextBeatTimeStamp = curTimeStamp + (beatLengthTemp - offSetTemp) * nsPerTick -1;
+                isBeatEnter = true;
             }
         }
         else
         {
-            // note that node_ptr has already been moved to the next during calculating the condition
+            // node_ptr has already been moved to the next during the calculation of the condition
             curNodeTimeStamp = curTimeStamp + (node_ptr->tickOffset - offSetTemp) * nsPerTick;
-            
-        }     
+        }
     }
 
     std::list<onPlayNote>::iterator it = onPlayList.begin();

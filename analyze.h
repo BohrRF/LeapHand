@@ -20,12 +20,12 @@ class beatAnalyze
 {
 public:
     Fourier fft;
+    control con;
     int64_t lastPeakTimeStamp;
     int beats;
     int64_t startTimePoint;
     bool isLowest;
-    bool isHighest;
-    control con;
+    bool isHighest;  
     LINK ptr;
     float hand_peak;
     fstream fp;

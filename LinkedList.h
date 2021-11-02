@@ -115,12 +115,13 @@ public:
     void clear();
     int readY(double data_ary[], const double &bias = 0) const;//
     int readY(Complex data_ary[], const double &bias = 0) const;
+    int readY(std::vector<double> &data_ary) const;
     int readXY(std::pair<double, double> data_ary[], size_t n) const;
     int readSpeed(std::vector<std::pair<int64_t, double>> &data_ary) const;
     int readSpeedAfter(std::vector<double> &data_ary, const int64_t &tm) const;
     int push(const int64_t &time, const double& posx, const double& posy);
     int count_node() const;
-    const Cdata& history(const int &his);
+    const Cdata& history(const int &his = 0);
     friend class Fourier;
 };
 

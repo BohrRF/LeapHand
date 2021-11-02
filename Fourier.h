@@ -47,6 +47,7 @@ public:
     double getSpeedVariance(const int64_t& tm) const;
     double calCurAccel(const int64_t &startTimeStamp, const Clist &list) const;
     bool freqAvalible();
+    double calHightRatio() const;
 };
 
 #endif // FOURIER_H_INCLUDED

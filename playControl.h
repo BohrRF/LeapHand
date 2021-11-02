@@ -5,7 +5,7 @@
 #include <list>
 #include "dataBase.h"
 #include "midi.h"
-
+#include "Fourier.h"
 
 class onPlayNote
 {
@@ -37,12 +37,14 @@ class control
     double curVelocityFactor;
     double curSpanFactor;
     double curAccel;
+    int64_t nextBeatTimeStamp;
     bool autoplayMode;
     bool musicLoop;
+    bool isBeatEnter;
 public:
     unsigned char beat_count = 0;
     int64_t calBeatLen();
-    control() : autoplayMode(true), musicLoop(true) {}
+    control() : autoplayMode(true), musicLoop(true), nextBeatTimeStamp(9635826323000000){}
     unsigned char playState;
     void readtxt(std::string FILENAME);
     void printMusic();
@@ -52,7 +54,7 @@ public:
     void resetBeat();
 
     void onBeat(const int64_t& curTimeStamp, const double & bpm,const double& hand_amp, const double& hand_accel);
-    void refresh(const int64_t& curTimeStamp, const double& hand_amp);
+    void refresh(const int64_t& curTimeStamp, const Fourier& fft);
 };
 
 #endif // PLAYCONTROL_H_INCLUDED

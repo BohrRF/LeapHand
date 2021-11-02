@@ -32,6 +32,15 @@ int Clist::readY(Complex data_ary[], const double &bias) const
     return n_count;
 }
 
+int Clist::readY(std::vector<double> &data_ary) const
+{
+    auto temp_ptr = last;
+    for (int i = n_count; i > 0; i--, temp_ptr = temp_ptr->before)
+        data_ary.push_back(temp_ptr->data.position.y);
+
+    return data_ary.size();
+}
+
 int Clist::readXY(std::pair<double, double> data_ary[], size_t n) const
 {
     auto temp_ptr = pointer->before;
