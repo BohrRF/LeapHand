@@ -44,7 +44,16 @@ class control
 public:
     unsigned char beat_count = 0;
     int64_t calBeatLen();
-    control() : autoplayMode(true), musicLoop(true), nextBeatTimeStamp(9635826323000000){}
+    control() :
+        curBpm(0.0),
+        curVelocityFactor(0.0),
+        curSpanFactor(0.0),
+        curAccel(0.0),
+        nextBeatTimeStamp(9635826323000000),
+        autoplayMode(true), 
+        musicLoop(true), 
+        isBeatEnter(false)
+        {}
     unsigned char playState;
     void readtxt(std::string FILENAME);
     void printMusic();
@@ -53,7 +62,7 @@ public:
     void resetPlayState();
     void resetBeat();
 
-    void onBeat(const int64_t& curTimeStamp, const double & bpm,const double& hand_amp, const double& hand_accel);
+    void onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel, const Fourier& fft);
     void refresh(const int64_t& curTimeStamp, const Fourier& fft);
 };
 

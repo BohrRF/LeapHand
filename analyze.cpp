@@ -163,19 +163,7 @@ void SampleListener::onFrame(const Controller& controller) {
 
         //cout << "Current Position: " << hands.rightmost().palmPosition().y << '\n';
         //cout << "Current Speed: " << fft.history(0).speed << '\n';
-
-        fft.FFT();
-        std::vector<std::pair<double, double>> maxlist;
-
-        fft.find_max_freq(maxlist); // 0 Hz amplitude was eliminated from this list
-
-        //cout << "cur time: " << curTimeStamp << " period: " << 8LL * 1000000 / maxlist[0] << '\n';
-        system("cls");
-        for (int i = 0; i < SPECLEN; i++)
-        {
-            printf("%f, %f\n", 60*maxlist[i].first, maxlist[i].second);
-        }
-          
+       
         //const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
         //cout << "Variance: " << var << '\n';
        
@@ -198,32 +186,21 @@ void SampleListener::onFrame(const Controller& controller) {
                     else
                         con.beat_count = 0;
                 }
-
-                //system("cls");
-
-
-
                 ++beats;
                 //printf("bpm: %.1f\n", 60000000 * (beats - 1.0) / static_cast<double>(positionSeries.back().first - startTimePoint));
                 //cout << hand_peak - hands.rightmost().palmPosition().y << endl;
-                
-
+              
                 auto accl_temp = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
                 fp << '\t' << accl_temp;
 
-                con.onBeat (curTimeStamp, 60 * maxlist[0].first, 
-                            hand_peak - fft.history().position.y,
-                            accl_temp);
+                con.onBeat (curTimeStamp, hand_peak - fft.history().position.y, accl_temp, fft);
+
+                hand_peak = 0;
                 isLowest = true;
+                isHighest = false;
             }
         }
         else
-        {
-            isLowest = false;         
-        }
-        con.refresh(curTimeStamp, fft);
-
-        if (fft.history(1).position.y > fft.history().position.y)
         {
             if (!isHighest)
             {
@@ -231,11 +208,10 @@ void SampleListener::onFrame(const Controller& controller) {
                 lastPeakTimeStamp = curTimeStamp;
                 isHighest = true;
             }
+
+            isLowest = false;         
         }
-        else
-        {
-            isHighest = false;
-        }
+        con.refresh(curTimeStamp, fft);
        
         fp << endl;
     }
