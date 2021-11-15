@@ -6,6 +6,9 @@
 #include "dataBase.h"
 #include "midi.h"
 #include "Fourier.h"
+#include "bpmLinkedList.h"
+
+const int BPM_LEN = 12;
 
 class onPlayNote
 {
@@ -33,7 +36,6 @@ class control
 
     unsigned int timetrans(const unsigned int& len);
     void write_beat(beatSection &beat, const std::vector<int> &notes);
-    double curBpm;
     double curVelocityFactor;
     double curSpanFactor;
     double curAccel;
@@ -41,7 +43,10 @@ class control
     bool autoplayMode;
     bool musicLoop;
     bool isBeatEnter;
+    BpmList bpmList;
 public:
+    double curBpm;
+    unsigned char playState;
     unsigned char beat_count = 0;
     int64_t calBeatLen();
     control() :
@@ -52,9 +57,9 @@ public:
         nextBeatTimeStamp(9635826323000000),
         autoplayMode(true), 
         musicLoop(true), 
-        isBeatEnter(false)
+        isBeatEnter(false),
+        bpmList(BPM_LEN)
         {}
-    unsigned char playState;
     void readtxt(std::string FILENAME);
     void printMusic();
     void initial_music();

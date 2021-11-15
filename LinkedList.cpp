@@ -53,6 +53,7 @@ int Clist::readXY(std::pair<double, double> data_ary[], size_t n) const
     return n;
 }
 
+
 int Clist::readSpeed(std::vector<std::pair<int64_t, double>>& data_ary) const
 {
     auto temp_ptr = last;
@@ -76,6 +77,7 @@ int Clist::readSpeedAfter(std::vector<double> &data_ary, const int64_t &tm) cons
 
     return data_ary.size();
 }
+
 
 int Clist::push(const int64_t& time, const double& posx, const double& posy)
 {
@@ -103,10 +105,12 @@ int Clist::push(const int64_t& time, const double& posx, const double& posy)
     return n_count;
 }
 
+
 int Clist::count_node() const
 {
     return n_count;
 }
+
 
 const Cdata& Clist::history(const int& his)
 {

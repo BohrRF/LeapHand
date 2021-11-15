@@ -64,22 +64,25 @@ public:
     }
 };
 
-typedef struct node
+
+class node
 {
 public:
     Cdata data;//
-    node *next;
-    node *before;
-} *LINK;
+    node* next;
+    node* before;
+    node() :next(nullptr), before(nullptr) {}
+};
+
 
 class Clist
 {
-    LINK pointer; //pointing at the next node of current last node
+    node *pointer; //pointing at the next node of current last node
     int n_count;
     int n_max;
 public:
-    LINK first;
-    LINK last;
+    node *first;
+    node *last;
 
     Clist(const int& length)
     {
@@ -103,7 +106,7 @@ public:
     }
     ~Clist()
     {
-        LINK temp;
+        node *temp;
         while (pointer)
         {
             temp = pointer->next;

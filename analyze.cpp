@@ -157,7 +157,7 @@ void SampleListener::onFrame(const Controller& controller) {
            << indexFingerX << '\t' << indexFingerY << '\t' 
            << palmX        << '\t' << palmY        << '\t'
            << wristX       << '\t' << wristY;
-
+        fp << '\t' << con.curBpm << '\t' << (int)con.playState;
         fft.push(curTimeStamp, palmX, palmY);
         fingerPosList.push(curTimeStamp, indexFingerX, indexFingerY);
 
@@ -191,7 +191,7 @@ void SampleListener::onFrame(const Controller& controller) {
                 //cout << hand_peak - hands.rightmost().palmPosition().y << endl;
               
                 auto accl_temp = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
-                fp << '\t' << accl_temp;
+                
 
                 con.onBeat (curTimeStamp, hand_peak - fft.history().position.y, accl_temp, fft);
 

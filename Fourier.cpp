@@ -120,11 +120,11 @@ void Fourier::find_max_freq(std::vector<std::pair<double, double>> &spec_with_fr
     
     int64_t span = data_list.last->data.timestamp - data_list.first->data.timestamp;
     double sample_freq = ((double)data_list.n_count - 1.0) / ((double)span / 1000000.0);
-    
+    /*
     std::cout << "Saved Frame Number:" << data_list.n_count << '\n';
     std::cout << "Time Span: " << span << '\n';
     std::cout << "Sample Frequency:" << sample_freq << "\n\n";
-    
+    */
     for (int i = 1; i < N / 2; i++)
         spec_with_freq.push_back(std::make_pair((double)i * sample_freq / (double)N, x[i].norm()));
 

@@ -149,6 +149,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="analyze.cpp" />
+    <ClCompile Include="BpmLinkedList.cpp" />
     <ClCompile Include="Fourier.cpp" />
     <ClCompile Include="leapTest.cpp" />
     <ClCompile Include="LinkedList.cpp" />
@@ -157,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="analyze.h" />
+    <ClInclude Include="BpmLinkedList.h" />
     <ClInclude Include="Complex.h" />
     <ClInclude Include="dataBase.h" />
     <ClInclude Include="Fourier.h" />

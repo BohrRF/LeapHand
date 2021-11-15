@@ -6,7 +6,6 @@
 #include "Leap.h"
 #include "Fourier.h"
 #include "midi.h"
-#include "LinkedList.h"
 #include "playControl.h"
 
 using namespace Leap;
@@ -26,7 +25,7 @@ public:
     int64_t startTimePoint;
     bool isLowest;
     bool isHighest;  
-    LINK ptr;
+    node ptr;
     float hand_peak;
     fstream fp;
     Clist fingerPosList;

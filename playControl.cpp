@@ -93,7 +93,7 @@ void control::resetBeat()
 const double STDRANGE = 300.0;
 const double STDACCEL = 10;
 
-void control::onBeat(const int64_t& curTimeStamp,const double& hand_amp, const double& hand_accel ,const Fourier& fft)
+void control::onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel ,const Fourier& fft)
 {
     if (hand_amp < 10) return;
 
@@ -102,25 +102,29 @@ void control::onBeat(const int64_t& curTimeStamp,const double& hand_amp, const d
     curAccel = hand_accel;
 
     curSpanFactor = STDACCEL / curAccel;//TODO scale this
+system("cls");
+    bpmList.push(curTimeStamp);
 
     fft.FFT();
     std::vector<std::pair<double, double>> maxlist;
-    system("cls");
+    
     fft.find_max_freq(maxlist); // 0 Hz amplitude was eliminated from this list
     /*
     system("cls");
     cout << "curAccel " << curAccel << endl;
     cout << "curhandamp" << hand_amp << endl;
     cout << "curBPM" << bpm << endl;
-    */
+    
     //cout << "cur time: " << curTimeStamp << " period: " << 8LL * 1000000 / maxlist[0] << '\n';
     
     for (int i = 0; i < 5; i++)
     {
         printf("%f, %f\n", 60 * maxlist[i].first, maxlist[i].second);
     }
-    curBpm = 60 * maxlist[0].first;
-
+    //curBpm = 60 * maxlist[0].first;
+    */
+    curBpm = bpmList.calAverage(beat_ptr->timeSigniture_num);
+    cout << curBpm << endl;
     if (playState == 3) playState = 2;
     
     if (!autoplayMode) 
@@ -152,7 +156,7 @@ void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
         //cout << "hight ratio " << fft.calHightRatio() << endl;
         if (fft.calHightRatio() > 0.7)
         {
-            playState = 2;
+            playState = 3;
         }
         isBeatEnter = false;
     }
@@ -178,7 +182,7 @@ void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
                 onPlayNote noteTemp;
                 noteTemp.onNote = n;
                 noteTemp.endTimeStamp = curTimeStamp + n.tickSpan * nsPerTick * curSpanFactor;
-                cout << "time stamp" << curTimeStamp << " span" << n.tickSpan * nsPerTick * curSpanFactor << endl;
+                //cout << "time stamp" << curTimeStamp << " span" << n.tickSpan * nsPerTick * curSpanFactor << endl;
 
                 onPlayList.emplace_back(noteTemp);
                 isListChange = true;
