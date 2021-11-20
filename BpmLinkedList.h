@@ -8,6 +8,7 @@ class bpmnode
 {
 public:
     double bpm;//
+    int64_t time_stamp;
     bpmnode* next;
     bpmnode* before;
     bpmnode() :next(nullptr), before(nullptr), bpm(0) {}
@@ -58,5 +59,5 @@ public:
     double calAverage(const int& length = 1) const;
     int count_node() const;
     void output() const;
-    const double& history(const int& his = 0) const;
+    const bpmnode* history(const int& his = 0) const;
 };

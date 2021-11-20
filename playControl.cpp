@@ -125,7 +125,11 @@ system("cls");
     */
     curBpm = bpmList.calAverage(beat_ptr->timeSigniture_num);
     cout << curBpm << endl;
-    if (playState == 3) playState = 2;
+    if (playState == 3)
+    {
+        playState = 2;
+        lastBeatTimeStamp = curTimeStamp;
+    }
     
     if (!autoplayMode) 
     {
@@ -140,9 +144,17 @@ system("cls");
         // in case the first note isn't at the first place of this beat
         curNodeTimeStamp = curTimeStamp + node_ptr->tickOffset * 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
     }
+    else
+    {
+        auto dif = 1.0 * (curTimeStamp - lastBeatTimeStamp) / (1e6 * (60.0 / curBpm));
+        if (dif > 0.25 && dif < 0.75)
+        {
+            playState = 2;
+        }
+    }
 }
 
-void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
+int control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
 {
     
     //cout << curTimeStamp << " " << curBpm << endl;
@@ -151,27 +163,38 @@ void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
     * curTimeStamp > lastBeatTimeStamp + 1e6 * (60.0 / curBpm) => if next beat should already came
     * hand_amp < 40 => hand_amp is too small to recongnized as a beat is comming
     */
+
+    /* 
+        0 -> not change 
+        1 -> next node
+        2 -> next beat
+    */
+    int if_next = 0; 
+
     if (isBeatEnter && curTimeStamp > nextBeatTimeStamp)
     { 
         //cout << "hight ratio " << fft.calHightRatio() << endl;
+        lastBeatTimeStamp = nextBeatTimeStamp;
         if (fft.calHightRatio() > 0.7)
         {
             playState = 3;
-        }
+        } 
         isBeatEnter = false;
     }
     
     ///TODO: stop the replay, go to (pause processing sequence) OR (a tempo and start right after next hand beat)
 
 
-    if (playState != 2) return;
+    if (playState != 2) return if_next;
     bool isListChange = false;
 
     if (curTimeStamp >= curNodeTimeStamp)
     {
+        if_next = 1;
         int64_t nsPerTick = 1e6 * (60.0 / curBpm) / beat_ptr->tickBeatLength;
         if (node_ptr != beat_ptr->tickSet.end())
         {
+            if_next = 2;
             for (auto& n : node_ptr->notes)
             {
                 //play
@@ -241,5 +264,6 @@ void control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
         }
     }
     */
+    return if_next;
 }
 

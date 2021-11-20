@@ -14,6 +14,7 @@ void BpmList::clear()
 int BpmList::push(const int64_t& time)
 {
     pointer->bpm = 60 * (1000000.0 / (time - lastBeatTimeStamp));
+    pointer->time_stamp = time;
     lastBeatTimeStamp = time;
     pointer = pointer->next;
     if (n_count == n_max)
@@ -40,8 +41,8 @@ int BpmList::push(const int64_t& time)
 
 double BpmList::calAverage(const int& length) const
 {
-    int n = (length <= n_count ? length : n_count);
-    if(n == 0) return 0;
+    int n = (length <= n_count ? length : n_count) - 1; //avoid fist 0 bpm node
+    if(n <= 0) return 0;
     auto ptr = last;
     double bpm = 0;
     for (int i = 0; i < n; i++)
@@ -59,11 +60,11 @@ int BpmList::count_node() const
 }
 
 
-const double& BpmList::history(const int& his) const
+const bpmnode* BpmList::history(const int& his) const
 {
     auto ptr = last;
     for (int i = his; i > 0; i--) ptr = ptr->before;
-    return ptr->bpm;
+    return ptr;
 }
 
 void BpmList::output() const

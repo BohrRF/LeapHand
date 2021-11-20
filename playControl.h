@@ -36,25 +36,29 @@ class control
 
     unsigned int timetrans(const unsigned int& len);
     void write_beat(beatSection &beat, const std::vector<int> &notes);
-    double curVelocityFactor;
-    double curSpanFactor;
-    double curAccel;
+    
     int64_t nextBeatTimeStamp;
+    
     bool autoplayMode;
     bool musicLoop;
     bool isBeatEnter;
     BpmList bpmList;
 public:
+    double curVelocityFactor;
+    double curSpanFactor;
+    double curAccel;
     double curBpm;
     unsigned char playState;
     unsigned char beat_count = 0;
+    int64_t lastBeatTimeStamp;
     int64_t calBeatLen();
     control() :
         curBpm(0.0),
         curVelocityFactor(0.0),
         curSpanFactor(0.0),
         curAccel(0.0),
-        nextBeatTimeStamp(9635826323000000),
+        nextBeatTimeStamp(0),
+        lastBeatTimeStamp(0),
         autoplayMode(true), 
         musicLoop(true), 
         isBeatEnter(false),
@@ -68,7 +72,7 @@ public:
     void resetBeat();
 
     void onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel, const Fourier& fft);
-    void refresh(const int64_t& curTimeStamp, const Fourier& fft);
+    int refresh(const int64_t& curTimeStamp, const Fourier& fft);
 };
 
 #endif // PLAYCONTROL_H_INCLUDED

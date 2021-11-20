@@ -156,8 +156,14 @@ void SampleListener::onFrame(const Controller& controller) {
         fp << curTimeStamp << '\t' 
            << indexFingerX << '\t' << indexFingerY << '\t' 
            << palmX        << '\t' << palmY        << '\t'
-           << wristX       << '\t' << wristY;
-        fp << '\t' << con.curBpm << '\t' << (int)con.playState;
+           << wristX       << '\t' << wristY       << '\t';
+
+        fp << con.curBpm            << '\t' 
+           << con.curAccel          << '\t' 
+           << con.curSpanFactor     << '\t'
+           << con.curVelocityFactor << '\t'
+           << (int)con.playState    << '\t';
+
         fft.push(curTimeStamp, palmX, palmY);
         fingerPosList.push(curTimeStamp, indexFingerX, indexFingerY);
 
@@ -174,11 +180,12 @@ void SampleListener::onFrame(const Controller& controller) {
             {
                 if (con.playState == 1)
                 {
-                    if (fft.freqAvalible())
+                    if (fft.freqAvalible())//always true
                     {
-                        if (con.beat_count >= con.getMusicInfo().first)
+                        if (con.beat_count > con.getMusicInfo().first) //beat+1
                         {
                             con.playState = 2;
+                            con.lastBeatTimeStamp = curTimeStamp;
                         }
                         else
                             con.beat_count++;
@@ -211,7 +218,7 @@ void SampleListener::onFrame(const Controller& controller) {
 
             isLowest = false;         
         }
-        con.refresh(curTimeStamp, fft);
+        fp << con.refresh(curTimeStamp, fft);
        
         fp << endl;
     }
