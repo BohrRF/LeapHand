@@ -124,6 +124,8 @@ void SampleListener::onFrame(const Controller& controller) {
     {
         //cout << "Current Position: NULL" << '\n';
         fft.reset();
+        con.playState = 0;
+        con.resetBpmList();
         //fft.push(controller.frame().timestamp(), fft.getAverage()); //record even no hand is detected
     }
     else
@@ -184,8 +186,7 @@ void SampleListener::onFrame(const Controller& controller) {
                     {
                         if (con.beat_count > con.getMusicInfo().first) //beat+1
                         {
-                            con.playState = 2;
-                            con.lastBeatTimeStamp = curTimeStamp;
+                            con.setplayState(curTimeStamp, 2);
                         }
                         else
                             con.beat_count++;
@@ -218,7 +219,7 @@ void SampleListener::onFrame(const Controller& controller) {
 
             isLowest = false;         
         }
-        fp << con.refresh(curTimeStamp, fft);
+        //fp << con.refresh(curTimeStamp, fft);
        
         fp << endl;
     }

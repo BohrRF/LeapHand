@@ -27,8 +27,6 @@ class control
     std::list<onPlayNote> onPlayList;
 
     simpleSound playSound;
-
-    int64_t curNodeTimeStamp; //update when play node_ptr jump
     std::vector<tickNode>::iterator node_ptr;
 
     unsigned int tickCount; //reset when beat_ptr jump
@@ -36,8 +34,6 @@ class control
 
     unsigned int timetrans(const unsigned int& len);
     void write_beat(beatSection &beat, const std::vector<int> &notes);
-    
-    int64_t nextBeatTimeStamp;
     
     bool autoplayMode;
     bool musicLoop;
@@ -50,18 +46,19 @@ public:
     double curBpm;
     unsigned char playState;
     unsigned char beat_count = 0;
+
+    int64_t curNodeTimeStamp; //update when play node_ptr jump
     int64_t lastBeatTimeStamp;
     int64_t calBeatLen();
+
     control() :
         curBpm(0.0),
         curVelocityFactor(0.0),
         curSpanFactor(0.0),
         curAccel(0.0),
-        nextBeatTimeStamp(0),
         lastBeatTimeStamp(0),
         autoplayMode(true), 
         musicLoop(true), 
-        isBeatEnter(false),
         bpmList(BPM_LEN)
         {}
     void readtxt(std::string FILENAME);
@@ -70,6 +67,8 @@ public:
     std::pair<int, int> getMusicInfo();
     void resetPlayState();
     void resetBeat();
+    void resetBpmList();
+    void setplayState(const int64_t& curTimeStamp, const int& mode);
 
     void onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel, const Fourier& fft);
     int refresh(const int64_t& curTimeStamp, const Fourier& fft);

@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <windows.h>
-
+#include <chrono>
 #include "analyze.h"
 
 int main(int argc, char** argv) {
@@ -36,9 +36,14 @@ int main(int argc, char** argv) {
         controller.setPolicy(Leap::Controller::POLICY_BACKGROUND_FRAMES);
     }
 
+
     //［Enter］キーが押されるまでLeap Motionの処理を続ける
     std::cout << "Press Enter to quit..." << std::endl;
-    while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000));
+    while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000))
+    {
+        auto t = std::chrono::high_resolution_clock::now();
+        listener.con.refresh(std::chrono::duration_cast<std::chrono::microseconds>(t.time_since_epoch()).count(), listener.fft);
+    }
 
     // アプリケーションの終了時にはリスナーを削除する
     controller.removeListener(listener);
