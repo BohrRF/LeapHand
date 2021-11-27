@@ -182,7 +182,7 @@ void SampleListener::onFrame(const Controller& controller) {
             {
                 if (con.playState == 1)
                 {
-                    if (fft.freqAvalible())//always true
+                    if (hand_peak - fft.history().position.y > LOW_HAND_AMP)//always true
                     {
                         if (con.beat_count > con.getMusicInfo().first) //beat+1
                         {
@@ -198,11 +198,12 @@ void SampleListener::onFrame(const Controller& controller) {
                 //printf("bpm: %.1f\n", 60000000 * (beats - 1.0) / static_cast<double>(positionSeries.back().first - startTimePoint));
                 //cout << hand_peak - hands.rightmost().palmPosition().y << endl;
               
-                auto accl_temp = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
+                auto finger_accl = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
+                auto hand_accl = fft.calCurAccel(lastPeakTimeStamp);
                 
-
-                con.onBeat (curTimeStamp, hand_peak - fft.history().position.y, accl_temp, fft);
-
+               
+                con.onBeat (curTimeStamp, hand_peak - fft.history().position.y, finger_accl, fft);
+                cout << finger_accl << ' ' << hand_accl << ' ' << (finger_accl > hand_accl ? finger_accl : hand_accl) << endl;
                 hand_peak = 0;
                 isLowest = true;
                 isHighest = false;
@@ -219,7 +220,7 @@ void SampleListener::onFrame(const Controller& controller) {
 
             isLowest = false;         
         }
-        //fp << con.refresh(curTimeStamp, fft);
+        fp << con.curBeatPos % 4;
        
         fp << endl;
     }

@@ -9,6 +9,7 @@
 #include "bpmLinkedList.h"
 
 const int BPM_LEN = 12;
+const double LOW_HAND_AMP = 10;
 
 class onPlayNote
 {
@@ -22,11 +23,8 @@ class control
 {
     musicData music;
 
-
-
     std::list<onPlayNote> onPlayList;
 
-    simpleSound playSound;
     std::vector<tickNode>::iterator node_ptr;
 
     unsigned int tickCount; //reset when beat_ptr jump
@@ -34,16 +32,23 @@ class control
 
     unsigned int timetrans(const unsigned int& len);
     void write_beat(beatSection &beat, const std::vector<int> &notes);
-    
+
+    simpleSound playSound;
     bool autoplayMode;
     bool musicLoop;
     bool isBeatEnter;
     BpmList bpmList;
+    
+
 public:
+    double speedBias;
+    double handBpm;
+    double handOffset;
     double curVelocityFactor;
     double curSpanFactor;
     double curAccel;
     double curBpm;
+    int curBeatPos;
     unsigned char playState;
     unsigned char beat_count = 0;
 
@@ -52,10 +57,15 @@ public:
     int64_t calBeatLen();
 
     control() :
+        speedBias(0.0),
+        handOffset(0),
+        handBpm(0.0),
         curBpm(0.0),
         curVelocityFactor(0.0),
         curSpanFactor(0.0),
         curAccel(0.0),
+        curBeatPos(0),
+        curNodeTimeStamp(0),
         lastBeatTimeStamp(0),
         autoplayMode(true), 
         musicLoop(true), 
@@ -70,8 +80,8 @@ public:
     void resetBpmList();
     void setplayState(const int64_t& curTimeStamp, const int& mode);
 
-    void onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel, const Fourier& fft);
-    int refresh(const int64_t& curTimeStamp, const Fourier& fft);
+    void onBeat(const int64_t& TimeStamp, const double& hand_amp, const double& hand_accel, const Fourier& fft);
+    int refresh(const int64_t& TimeStamp, const Fourier& fft);
 };
 
 #endif // PLAYCONTROL_H_INCLUDED

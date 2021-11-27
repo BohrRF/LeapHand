@@ -19,17 +19,33 @@ public:
 
     const Cpos& operator = (const Cpos& rval)
     {
-        this->x = rval.x;
-        this->y = rval.y;
+        x = rval.x;
+        y = rval.y;
         return rval;
     }
 
-    const double& operator - (const Cpos& rval) const
+    const Cpos operator / (const int64_t& rval) const
+    {
+        Cpos temp;
+        temp.x = this->x / rval;
+        temp.y = this->y / rval;
+        return temp;
+    }
+
+    const Cpos operator * (const int64_t& rval) const
+    {
+        Cpos temp;
+        temp.x = this->x * rval;
+        temp.y = this->y * rval;
+        return temp;
+    }
+
+    const Cpos operator - (const Cpos& rval) const
     {
         Cpos temp;
         temp.x = this->x - rval.x;
         temp.y = this->y - rval.y;
-        return temp.norm();
+        return temp;
     }
 
     Cpos(const double& posx = 0, const double& posy = 0)
@@ -50,7 +66,8 @@ class Cdata
 public:
     int64_t timestamp;
     Cpos position;
-    double speed;
+    Cpos speed;
+
     Cdata()
     {
         timestamp = 0;
@@ -120,7 +137,7 @@ public:
     int readY(Complex data_ary[], const double &bias = 0) const;
     int readY(std::vector<double> &data_ary) const;
     int readXY(std::pair<double, double> data_ary[], size_t n) const;
-    int readSpeed(std::vector<std::pair<int64_t, double>> &data_ary) const;
+    int readSpeed(std::vector<std::pair<int64_t, Cpos>> &data_ary) const;
     int readSpeedAfter(std::vector<double> &data_ary, const int64_t &tm) const;
     int push(const int64_t &time, const double& posx, const double& posy);
     int count_node() const;

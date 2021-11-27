@@ -12,6 +12,8 @@
 #include <chrono>
 #include "analyze.h"
 
+using namespace std::chrono;
+
 int main(int argc, char** argv) {
     
     /*
@@ -41,8 +43,8 @@ int main(int argc, char** argv) {
     std::cout << "Press Enter to quit..." << std::endl;
     while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000))
     {
-        auto t = std::chrono::high_resolution_clock::now();
-        listener.con.refresh(std::chrono::duration_cast<std::chrono::microseconds>(t.time_since_epoch()).count(), listener.fft);
+        auto t = high_resolution_clock::now();
+        listener.con.refresh(duration_cast<microseconds>(t.time_since_epoch()).count(), listener.fft);
     }
 
     // アプリケーションの終了時にはリスナーを削除する

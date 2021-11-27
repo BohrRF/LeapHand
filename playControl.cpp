@@ -80,6 +80,7 @@ void control::setplayState(const int64_t &curTimeStamp, const int& mode)
     if (mode == 2)
     {
         lastBeatTimeStamp = curNodeTimeStamp = curTimeStamp;
+        speedBias = 0;
     }
     playState = mode;
 }
@@ -105,29 +106,26 @@ void control::resetBpmList()
 }
 
 const double STDRANGE = 300.0;
-const double STDACCEL = 10;
+const double STDACCEL = 20;
 
-void control::onBeat(const int64_t& curTimeStamp, const double& hand_amp, const double& hand_accel ,const Fourier& fft)
+void control::onBeat(const int64_t& TimeStamp, const double& hand_amp, const double& hand_accel ,const Fourier& fft)
 {
-    if (hand_amp < 10) return;
+    if (hand_amp < LOW_HAND_AMP) return;
+
+    int64_t curTimeStamp = TimeStamp - handOffset;
 
     curVelocityFactor = hand_amp/STDRANGE;//TODO change it into factor form
-
     curAccel = hand_accel;
-
     curSpanFactor = STDACCEL / curAccel;//TODO scale this
 system("cls");
     bpmList.push(curTimeStamp);
-
+    handBpm = bpmList.calAverage(beat_ptr->timeSigniture_num);
+    /*
     fft.FFT();
     std::vector<std::pair<double, double>> maxlist;
     
     fft.find_max_freq(maxlist); // 0 Hz amplitude was eliminated from this list
-    /*
-    system("cls");
-    cout << "curAccel " << curAccel << endl;
-    cout << "curhandamp" << hand_amp << endl;
-    cout << "curBPM" << bpm << endl;
+   
     
     //cout << "cur time: " << curTimeStamp << " period: " << 8LL * 1000000 / maxlist[0] << '\n';
     
@@ -137,8 +135,6 @@ system("cls");
     }
     //curBpm = 60 * maxlist[0].first;
     */
-    curBpm = bpmList.calAverage(beat_ptr->timeSigniture_num);
-    cout << curBpm << endl;
 
     if (playState == 3)
     {
@@ -155,21 +151,35 @@ system("cls");
         }
         node_ptr = beat_ptr->tickSet.begin();
        
-        // in case the first note isn't at the first place of this beat
-        curNodeTimeStamp += node_ptr->tickOffset * 1e6 * (60 / curBpm) / beat_ptr->tickBeatLength;
+        // in case the first note in this beat has offset
+        curNodeTimeStamp += node_ptr->tickOffset * 1e6 * (60 / handBpm) / beat_ptr->tickBeatLength;
     }
     else
     {
-        double dif = 1.0 * (curTimeStamp - lastBeatTimeStamp) / (1e6 * (60.0 / curBpm));
+        double dif = 1.0 * (curTimeStamp - lastBeatTimeStamp) / (1e6 * (60.0 / handBpm));
+        dif -= (int)dif;
         cout << dif << endl;
-        if (dif > 0.25 && dif < 0.75)
+        if (dif < 0.25)
+        {
+            speedBias = -handBpm * dif;
+        }
+        else if (dif > 0.75)
+        {
+            speedBias = handBpm * (1 - dif);
+        }
+        else
         {
             playState = 3;
         }
     }
+
+    curBpm = handBpm + speedBias;
+    cout << "curAccel   " << curAccel << endl;
+    cout << "curhandamp " << hand_amp << endl;
+    cout << "curBPM     " << curBpm << " = " << handBpm << " + " << speedBias << endl;
 }
 
-int control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
+int control::refresh(const int64_t& TimeStamp, const Fourier& fft)
 {
     
     //cout << curTimeStamp << " " << curBpm << endl;
@@ -191,6 +201,8 @@ int control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
 
     if (playState != 2) return if_next;
     bool isListChange = false;
+    int64_t curTimeStamp = TimeStamp - handOffset;
+
     if (curTimeStamp >= curNodeTimeStamp)
     {
         if_next = 1;
@@ -218,31 +230,36 @@ int control::refresh(const int64_t& curTimeStamp, const Fourier& fft)
             unsigned int beatLengthTemp = beat_ptr->tickBeatLength;
             //cout << curTimeStamp << endl;
             //cout << curNodeTimeStamp << "->";
-            if (++node_ptr == beat_ptr->tickSet.end()) // the end of this beat?
-            {
-                if (autoplayMode)
-                {
-                    if (++beat_ptr == music.beatSet.end()) // end of the whole music?
-                    {
-                        beat_ptr = music.beatSet.begin();
-                        if (!musicLoop) playState = 0;
-                    }
-                    node_ptr = beat_ptr->tickSet.begin();
-
-                    // first node offset in new beat + previous beat length - last beat offtset in previous beat
-                    curNodeTimeStamp += (node_ptr->tickOffset + beatLengthTemp - offSetTemp) * usPerTick;
-                    lastBeatTimeStamp = curNodeTimeStamp - node_ptr->tickOffset;
-                    if (fft.calHightRatio() > 0.7)
-                    {
-                        //playState = 3;
-                    }
-                }
-            }
-            else
-            {   
+            if (++node_ptr != beat_ptr->tickSet.end()) // the end of this beat?
+            { 
                 // node_ptr has already been moved to the next during the calculation of the condition
                 curNodeTimeStamp += (node_ptr->tickOffset - offSetTemp) * usPerTick;
             }
+            else if (autoplayMode)
+            {
+                ++curBeatPos;
+                if (++beat_ptr == music.beatSet.end()) // end of the whole music?
+                {
+                    beat_ptr = music.beatSet.begin();
+                    curBeatPos = 0;
+
+                    if (!musicLoop) playState = 0;
+                }
+                node_ptr = beat_ptr->tickSet.begin();
+
+                // first node offset in new beat + previous beat length - last beat offtset in previous beat
+                curNodeTimeStamp += (node_ptr->tickOffset + beatLengthTemp - offSetTemp) * usPerTick;
+                lastBeatTimeStamp = curNodeTimeStamp - node_ptr->tickOffset;
+                if (fft.calHightRatio() > 0.7)
+                {
+                    //playState = 3;
+                }
+            }
+            else
+            {
+
+            }
+            
             //cout << curNodeTimeStamp << endl;
         }
     }

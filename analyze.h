@@ -31,7 +31,14 @@ public:
     Clist fingerPosList;
 
     void showFrameInfo(const Controller& controller);
-    beatAnalyze() : beats(0), startTimePoint(0), isLowest(false), isHighest(0), fft(N), hand_peak(0), fingerPosList(N)
+    beatAnalyze() : 
+        beats(0), 
+        startTimePoint(0), 
+        isLowest(false), 
+        isHighest(0), 
+        fft(N), 
+        hand_peak(0), 
+        fingerPosList(N)
     {
         con.initial_music();
         fp.open("soft.txt", std::ios::out);

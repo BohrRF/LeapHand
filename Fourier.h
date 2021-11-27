@@ -46,6 +46,7 @@ public:
     std::unique_ptr<double[]> getSpec() const;
     double getSpeedVariance(const int64_t& tm) const;
     double calCurAccel(const int64_t &startTimeStamp, const Clist &list) const;
+    double calCurAccel(const int64_t& startTimeStamp) const;
     bool freqAvalible();
     double calHightRatio() const;
 };

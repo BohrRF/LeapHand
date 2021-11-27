@@ -54,7 +54,7 @@ int Clist::readXY(std::pair<double, double> data_ary[], size_t n) const
 }
 
 
-int Clist::readSpeed(std::vector<std::pair<int64_t, double>>& data_ary) const
+int Clist::readSpeed(std::vector<std::pair<int64_t, Cpos>>& data_ary) const
 {
     auto temp_ptr = last;
 
@@ -73,7 +73,7 @@ int Clist::readSpeedAfter(std::vector<double> &data_ary, const int64_t &tm) cons
 
     // n_count-1 here because the speed in the first position is not usable
     for (i = n_count-1; i > 0 && temp_ptr->data.timestamp >= tm; i--, temp_ptr = temp_ptr->before)
-        data_ary.push_back(temp_ptr->data.speed);
+        data_ary.push_back(temp_ptr->data.speed.norm());
 
     return data_ary.size();
 }
@@ -84,7 +84,7 @@ int Clist::push(const int64_t& time, const double& posx, const double& posy)
     Cpos temp(posx, posy);
     pointer->data.timestamp = time;
     pointer->data.position = { posx, posy };
-    pointer->data.speed = 1000 * (temp - last->data.position) / (time - last->data.timestamp);
+    pointer->data.speed = (temp - last->data.position) / (time - last->data.timestamp) * 1000;
     pointer = pointer->next;
     if (n_count == n_max)
     {
