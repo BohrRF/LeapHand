@@ -10,42 +10,311 @@
 #include <cstring>
 #include <windows.h>
 #include <chrono>
+#include <conio.h>
+#include <WINUSER.H>
+#include <sstream>
 #include "analyze.h"
 
+#pragma warning( disable:4996 )
+
+#define SHOW
+using namespace std;
 using namespace std::chrono;
 
 int main(int argc, char** argv) {
     
-    /*
-    wchar_t* screen = new wchar_t[nScreenWidth * nScreenHeight];
-    HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    SetConsoleActiveScreenBuffer(hConsole);
-    DWORD dwBytesWritten = 0;
-    */
+    HANDLE hOut;
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    system("chcp 437");
+    system("cls");
+    auto t = high_resolution_clock::now();
+    auto temp = t;
+
+    auto now = system_clock::now();
+    time_t tt = system_clock::to_time_t(now);
+    struct tm local_time;
+    stringstream time;
+    localtime_s(&local_time, &tt);
+    time << local_time.tm_mon + 1 << local_time.tm_mday << "-" << local_time.tm_hour << "-" << local_time.tm_min << "-" << local_time.tm_sec;
+    SampleListener listener("o/"+time.str());
+    Controller controller;
+    while (!controller.isConnected());
+    controller.addListener(listener);// イベントを受け取るリスナーを登録する
+    if (argc > 1 && strcmp(argv[1], "--bg") == 0)
+    {
+        controller.setPolicy(Leap::Controller::POLICY_BACKGROUND_FRAMES);// 起動時の引数に"--bg"が設定されていた場合はバックグラウンドモード(アプリケーションがアクティブでない場合にもデータを取得する)で動作させる
+        controller.setPolicy(Leap::Controller::POLICY_ALLOW_PAUSE_RESUME);
+    }
+    
+    control &con = listener.con;
+    Fourier fft(128);
+
+    int cnt = 0;
+    int beat_cnt_temp = 0;
+    char c = 0;
+
+    stringstream ss;
+    string str;
+    string name, configName("o/config.txt");
+    unsigned char arytemp[129] = { 0 }, ary[129] = { 0 }, * ay = ary, * by = arytemp, * p = nullptr;
+    bool keepE = true, keepU = false, keepD = false, keepL = false, keepR = false, keepS = false;
+
+    fstream fp;
+    if (false)
+    {
+        con.initial_music();
+        con.start(duration_cast<microseconds>(t.time_since_epoch()).count());
+        con.isCalib = true;
+        while (1)
+        {
+            t = high_resolution_clock::now();
+            con.refresh(duration_cast<microseconds>(t.time_since_epoch()).count(), listener.fft);
+            if (con.playState == 1) cout << "*";
+            if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+            {
+                if (!keepS)
+                {
+                    keepS = true;
+                    if (con.calibrate_next() > 6) break;
+                }
+            }
+            else
+            {
+                keepS = false;
+            }
+        }  
+        fp.open(configName, std::ios::out);
+        fp << con.HAND_MIN << endl;
+        fp << con.HAND_MAX << endl;
+        fp << con.timeOffset << endl;
+        fp << con.ACCEL_MIN << endl;
+        fp << con.ACCEL_STD << endl;
+        fp << con.ACCEL_MAX << endl;
+        fp.close();
+        cout << "Amp min: " << con.HAND_MIN << endl;
+        cout << "Amp max: " << con.HAND_MAX << endl;
+        cout << "Time offset: " << con.timeOffset << endl;
+        cout << "Accel min: " << con.ACCEL_MIN << endl;
+        cout << "Accel std:  " << con.ACCEL_STD << endl;
+        cout << "Accel max: " << con.ACCEL_MAX << endl;
+        con.isCalib = false;
+        con.resetAll();
+    }
+    else
+    {
+        fp.open(configName, std::ios::in);
+        fp >> con.HAND_MIN >> con.HAND_MAX >> con.timeOffset >> con.ACCEL_MIN >> con.ACCEL_STD >> con.ACCEL_MAX;
+        fp.close();
+    }
 
     // Leap Motionのコントローラーおよびイベントを受け取るリスナー（のサブクラス）を作成する
-    SampleListener listener;
-    Controller controller;
-
-    // イベントを受け取るリスナーを登録する
-    controller.addListener(listener);
-
     
-    // 起動時の引数に"--bg"が設定されていた場合は
-    // バックグラウンドモード(アプリケーションがアクティブでない場合にもデータを取得する)
-    // で動作させる
-    if (argc > 1 && strcmp(argv[1], "--bg") == 0) {
-        controller.setPolicy(Leap::Controller::POLICY_BACKGROUND_FRAMES);
-    }
 
-
-    //［Enter］キーが押されるまでLeap Motionの処理を続ける
-    std::cout << "Press Enter to quit..." << std::endl;
-    while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000))
+    while (1)
     {
-        auto t = high_resolution_clock::now();
-        listener.con.refresh(duration_cast<microseconds>(t.time_since_epoch()).count(), listener.fft);
+        cout << "Midi File name: ";
+        std::getline(cin, name);
+        con.readMIDI(name);
+        //con.printMusic();
+        system("cls");
+
+        con.start(duration_cast<microseconds>(t.time_since_epoch()).count());
+        con.playState = 1;
+        while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000))
+        {
+            t = high_resolution_clock::now();
+            con.refresh(duration_cast<microseconds>(t.time_since_epoch()).count(), listener.fft);
+            
+            if (duration_cast<microseconds>(t - temp).count() > 7.5 * 1e6 / con.curBpm)
+            {
+                //printf("\x1b[1m");
+                if (cnt++ % 8 == 0)
+                {
+                    //con.onBeat(duration_cast<microseconds>(t.time_since_epoch()).count(), 300, 20, fft);
+                    //con.refresh(duration_cast<microseconds>(t.time_since_epoch()).count(), fft);
+                }
+#ifdef SHOW
+                con.getOnPlayList(ay);
+                if ((by[128] = (unsigned char)con.beatRecieved) == 1) con.beatRecieved = false;
+                if (con.curBeatPos != beat_cnt_temp)
+                {
+                    c = '_';//196 '-'223
+                    beat_cnt_temp = con.curBeatPos;
+                }
+                else
+                {
+                    c = ' ';
+                }
+
+                ss << beat_cnt_temp;
+                ss >> str;
+                cout << '\r' << '\b';
+
+                for (unsigned i = 0; i < 125; i++)
+                {
+                    if (by[i] == 0)
+                    {
+                        if (i < str.size() && c == '_')
+                        {
+                            SetConsoleTextAttribute(hOut, 15);
+                            cout << str[i];
+                        }
+                        else
+                        {
+                            SetConsoleTextAttribute(hOut, 8);
+                            cout << c;
+                        }
+                    }
+                    else
+                    {
+                        // '_' shows current state at the bottom of each line (starting of the next)
+                        // thus current refreshed line are representing previous statement
+                        //which stored in arytemp[]
+                        if (by[i] == 16)
+                        {
+                            SetConsoleTextAttribute(hOut, 15);
+                            cout << '\261';
+                        }
+                        else
+                        {
+                            SetConsoleTextAttribute(hOut, 16 - by[i]);
+                            cout << '\333';
+                        }
+
+                    }
+                }
+                if (by[128])
+                {
+                    SetConsoleTextAttribute(hOut, 11);
+                    cout << "___";
+                    con.beatRecieved = false;
+                }
+                else
+                {
+                    for (int i = 125; i < 128; i++)
+                    {
+                        if (by[i] != 0)
+                        {
+                            if (by[i] == 16)
+                            {
+                                SetConsoleTextAttribute(hOut, 15);
+                                cout << '\261';
+                            }
+                            else
+                            {
+                                SetConsoleTextAttribute(hOut, 16 - by[i]);
+                                cout << '\333';
+                            }
+                        }
+                        else
+                        {
+                            cout << ' ';
+                        }
+                    }
+                }
+                SetConsoleTextAttribute(hOut, 15);
+                con.printParameter();
+                //printf("\x1b[0m");
+                p = by;
+                by = ay;
+                ay = p;
+
+                ss.clear();
+                temp = t;
+#endif
+            }
+            
+            if (GetAsyncKeyState(VK_UP) & 0x8000)
+            {
+                if (!keepU)
+                {
+                    keepU = true;
+                    con.curBpm += 10;
+                }
+            }
+            else
+            {
+                keepU = false;
+            }
+
+            if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+            {
+                if (!keepD)
+                {
+                    keepD = true;
+                    con.curBpm -= 10;
+                }
+            }
+            else
+            {
+                keepD = false;
+            }
+
+            if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+            {
+                if (!keepL)
+                {
+                    keepL = true;
+                    con.timeOffset -= 1;
+                }
+            }
+            else
+            {
+                keepL = false;
+            }
+
+            if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+            {
+                if (!keepR)
+                {
+                    keepR = true;
+                    con.timeOffset += 1;
+                }
+            }
+            else
+            {
+                keepR = false;
+            }
+
+
+            if (GetAsyncKeyState(VK_RETURN) & 0x8000)
+            {
+                if (!keepE)
+                {
+                    keepE = true;
+                    //con.onBeat(duration_cast<microseconds>(t.time_since_epoch()).count(), 300, 20, fft);
+                }
+            }
+            else
+            {
+                keepE = false;
+            }
+
+            if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+            {
+                if (!keepS)
+                {
+                    if (con.playState == 3)
+                        con.resume(duration_cast<microseconds>(t.time_since_epoch()).count());
+                    else if (con.playState == 2)
+                        con.pause(duration_cast<microseconds>(t.time_since_epoch()).count());
+                    keepS = true;
+                }
+            }
+            else
+            {
+                keepS = false;
+            }
+        }
+        while (_getch() != VK_ESCAPE);
+        con.resetAll();
+        memset(arytemp, 0, 128 * sizeof(unsigned char));
+        memset(ary, 0, 128 * sizeof(unsigned char));
+        system("cls");
     }
+
+
+
 
     // アプリケーションの終了時にはリスナーを削除する
     controller.removeListener(listener);

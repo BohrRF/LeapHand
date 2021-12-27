@@ -96,36 +96,23 @@ void SampleListener::onFrame(const Controller& controller) {
     const FingerList &fingers = hands.rightmost().fingers();
 
     //int64_t soundEndTime = 0;
-    bool soundOn = false;
-    bool ifKeepE = false;
     int64_t curTimeStamp = controller.frame().timestamp();
-
-
-    if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+    static int beat_count = 0;
+    static double dis = 0;
+    if (con.playState == 0)
     {
-        if (!ifKeepE)
-        {
-            con.playState = 1;
-            ifKeepE = true;
-        }
-    }
-    else
-    {
-        ifKeepE = false;
+        beat_count = 0;
+        return;
     }
 
-    if (GetAsyncKeyState(VK_RETURN) & 0x8000)
-    {
-        fft.reset();
-        con.resetPlayState();
-    }
-    
     if (hands.isEmpty())
     {
         //cout << "Current Position: NULL" << '\n';
-        fft.reset();
-        con.playState = 0;
-        con.resetBpmList();
+        if (con.playState == 2 && !con.isCalib)
+        {
+            con.pause(curTimeStamp);
+            beat_count = 0;
+        }
         //fft.push(controller.frame().timestamp(), fft.getAverage()); //record even no hand is detected
     }
     else
@@ -137,37 +124,15 @@ void SampleListener::onFrame(const Controller& controller) {
         float wristX = hands.rightmost().arm().wristPosition().x;
         float wristY = hands.rightmost().arm().wristPosition().y;
         
-        
-        if (hands.rightmost().grabAngle() > 2.9)
+        if (hands.rightmost().grabAngle() > 3.1415 && con.playState == 2 && !con.isCalib)
         {
-            con.playState = 0;
-            con.resetBeat();
-            fft.reset();
+            con.pause(curTimeStamp);
             return;
         }
-        else if (con.playState == 0)
-        {
-            con.playState = 1;
-            con.beat_count = 0;
-        }
-        else
-        {
-            
-        }
-            
-        fp << curTimeStamp << '\t' 
-           << indexFingerX << '\t' << indexFingerY << '\t' 
-           << palmX        << '\t' << palmY        << '\t'
-           << wristX       << '\t' << wristY       << '\t';
-
-        fp << con.curBpm            << '\t' 
-           << con.curAccel          << '\t' 
-           << con.curSpanFactor     << '\t'
-           << con.curVelocityFactor << '\t'
-           << (int)con.playState    << '\t';
 
         fft.push(curTimeStamp, palmX, palmY);
         fingerPosList.push(curTimeStamp, indexFingerX, indexFingerY);
+        if(isHighest) dis += (indexFingerY - fingerPosList.history(1).position.y);
 
         //cout << "Current Position: " << hands.rightmost().palmPosition().y << '\n';
         //cout << "Current Speed: " << fft.history(0).speed << '\n';
@@ -175,36 +140,36 @@ void SampleListener::onFrame(const Controller& controller) {
         //const auto var = fft.getSpeedVariance(static_cast<int64_t>(curTimeStamp - 8LL * 1000000 / maxlist[0]));//length of 8beats
         //cout << "Variance: " << var << '\n';
        
-
         if (fft.history(1).position.y < fft.history().position.y)
         {
-            if (!isLowest)
+            if (!isLowest && hand_peak - fft.history(1).position.y > LOW_HAND_AMP)
             {
-                if (con.playState == 1)
-                {
-                    if (hand_peak - fft.history().position.y > LOW_HAND_AMP)//always true
-                    {
-                        if (con.beat_count > con.getMusicInfo().first) //beat+1
-                        {
-                            con.setplayState(curTimeStamp, 2);
-                        }
-                        else
-                            con.beat_count++;
-                    }
-                    else
-                        con.beat_count = 0;
-                }
-                ++beats;
                 //printf("bpm: %.1f\n", 60000000 * (beats - 1.0) / static_cast<double>(positionSeries.back().first - startTimePoint));
                 //cout << hand_peak - hands.rightmost().palmPosition().y << endl;
-              
-                auto finger_accl = fft.calCurAccel(lastPeakTimeStamp, fingerPosList);
-                auto hand_accl = fft.calCurAccel(lastPeakTimeStamp);
-                
-               
-                con.onBeat (curTimeStamp, hand_peak - fft.history().position.y, finger_accl, fft);
-                cout << finger_accl << ' ' << hand_accl << ' ' << (finger_accl > hand_accl ? finger_accl : hand_accl) << endl;
+
+                auto fingerAmp = fft.calFingerAmp(lastBeatTimeStamp, fingerPosList);
+                auto finger_accl = fft.calCurAccel(lastPeakTimeStamp, lastBeatTimeStamp, fingerPosList);
+                //cout << dis << " " << fingerAmp << " " << hand_peak - palmY << endl;
+                //dis = 0;
+                auto hand_accl = fft.calCurAccel(lastPeakTimeStamp, lastBeatTimeStamp);
+                //cout << "s: " << fft.calCurAcceld(lastPeakTimeStamp, lastBeatTimeStamp) << " t: " << fft.calCurAccel(lastPeakTimeStamp, lastBeatTimeStamp) << " d: " << fft.calCurAcceld(lastPeakTimeStamp, lastBeatTimeStamp) / fft.calCurAccel(lastPeakTimeStamp, lastBeatTimeStamp)  << endl;
+                double temp = 0;
+                if (con.isCalib)
+                    con.calibrate(fft.history(1).timestamp, fingerAmp.norm(), hand_accl, fft);
+                else
+                    con.onBeat(fft.history(1).timestamp, fingerAmp.norm(), hand_accl, fft);
+                fp_beat << curTimeStamp << '\t'
+                    << indexFingerX << '\t' << indexFingerY << '\t'
+                    << palmX << '\t' << palmY << '\t'
+                    << wristX << '\t' << wristY << '\t'
+                    << con.curBpm << '\t'
+                    << con.curAccel << '\t'
+                    << con.dif << '\t'
+                    << con.bpmList.last->bpm << '\t'
+                    << (int)con.playState << '\t';
+                fp << con.curBeatPos % 4;
                 hand_peak = 0;
+                lastBeatTimeStamp = fft.history(1).timestamp;
                 isLowest = true;
                 isHighest = false;
             }
@@ -214,12 +179,21 @@ void SampleListener::onFrame(const Controller& controller) {
             if (!isHighest)
             {
                 hand_peak = fft.history(1).position.y;
-                lastPeakTimeStamp = curTimeStamp;
+                lastPeakTimeStamp = fft.history(1).timestamp;
                 isHighest = true;
             }
 
             isLowest = false;         
         }
+        fp << curTimeStamp << '\t'
+            << indexFingerX << '\t' << indexFingerY << '\t'
+            << palmX << '\t' << palmY << '\t'
+            << wristX << '\t' << wristY << '\t'
+            << con.curBpm << '\t'
+            << con.curAccel << '\t'
+            << con.curSpanFactor << '\t'
+            << con.curVelocityFactor << '\t'
+            << (int)con.playState << '\t';
         fp << con.curBeatPos % 4;
        
         fp << endl;

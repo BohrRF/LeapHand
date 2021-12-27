@@ -3,45 +3,58 @@
 
 #include <vector>
 
-static const int TPQN = 60;
 class note
 {
 public:
-    unsigned int channel;
-    unsigned int velocity;
-    unsigned int number;
-    unsigned int tickSpan;
-    void operator = (const note &rvar)
+    unsigned int channel = 0;
+    unsigned int velocity = 0;
+    unsigned int number = 0;
+    unsigned int tickSpan = 0;
+    bool isOffed = false;
+
+    void operator = (const note &rval)
     {
-        this->channel = rvar.channel;
-        this->number = rvar.number;
-        this->tickSpan = rvar.tickSpan;
-        this->velocity = rvar.velocity;
+        this->channel = rval.channel;
+        this->number = rval.number;
+        this->tickSpan = rval.tickSpan;
+        this->velocity = rval.velocity;
     }
+    bool operator == (const note &rval) const
+    {
+        return (this->channel == rval.channel && this->number == rval.number);
+    }
+
+    note(const note& n) : channel(n.channel), velocity(n.velocity), number(n.number), tickSpan(n.tickSpan), isOffed(n.isOffed) {}
+    note() {}
 };
 
 class tickNode
 {
 public:
+    unsigned int tickOffset = 0;
+
     std::vector<note> notes;
-    unsigned int tickOffset;
+    std::vector<std::pair<unsigned, unsigned>> channelSound;
+    std::vector<std::pair<unsigned, std::pair<unsigned, unsigned>>> channelBank;
+    std::vector<std::vector<unsigned char>> sysMessage;
+    std::vector<std::vector<unsigned>> specialEvents;
 };
 
 class beatSection
 {
 public:
 
-    unsigned int tickBeatLength;
-    unsigned int timeSigniture_num;
-    unsigned int timeSigniture_den;
+    unsigned int tickBeatLength = 480;
+    unsigned int timeSigniture_num = 4;
+    unsigned int timeSigniture_den = 4;
 
     std::vector<tickNode> tickSet;
 
-    inline void setTimeSigniture(const unsigned int &num = 4, const unsigned int &den = 4)
+    inline void setTimeSigniture(unsigned int TPQN, const unsigned int &num, const unsigned int &den)
     {
-        tickBeatLength = TPQN * (4 / den); 
+        tickBeatLength = TPQN * (4.0 / den);
         timeSigniture_num = num;
-        timeSigniture_den = den;           
+        timeSigniture_den = den;
     }
 };
 
@@ -49,6 +62,7 @@ class musicData
 {
 public:
     std::vector<beatSection> beatSet;
+    unsigned int TPQN = 480;
 };
 
 

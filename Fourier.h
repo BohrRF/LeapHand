@@ -6,7 +6,7 @@
 
 #include "LinkedList.h"
 
-static const int N = 128;
+static const int N = 512;
 static const double PI = 3.14159265358979323846;
 
 static inline void swap(Complex &a, Complex &b)
@@ -42,13 +42,15 @@ public:
     void find_max_freq(std::vector<std::pair<double, double>>& spec_with_freq) const;
     void outSpec() const;
     int getListLength() const;
-    const Cdata& history(const int& his = 0);
+    const Cdata& history(const int& his = 0) const;
     std::unique_ptr<double[]> getSpec() const;
     double getSpeedVariance(const int64_t& tm) const;
-    double calCurAccel(const int64_t &startTimeStamp, const Clist &list) const;
-    double calCurAccel(const int64_t& startTimeStamp) const;
+    double calCurAccel(const int64_t& startTimeStamp, const int64_t& lastBestTimeStamp, const Clist& list) const;
+    double calCurAccel(const int64_t& startTimeStamp, const int64_t& lastBeatTimeStamp) const;
+    double calCurAcceld(const int64_t& startTimeStamp, const int64_t& lastBeatTimeStamp) const;
     bool freqAvalible();
-    double calHightRatio() const;
+    double calHightRatio(const double& amp) const;
+    Cpos calFingerAmp(const int64_t& startTimeStamp, const Clist& list) const;
 };
 
 #endif // FOURIER_H_INCLUDED

@@ -141,7 +141,7 @@ std::unique_ptr<double[]> Fourier::getSpec() const
     return res;
 }
 
-const Cdata& Fourier::history(const int& his)
+const Cdata& Fourier::history(const int& his) const
 {
     return data_list.history(his);
 }
@@ -173,35 +173,56 @@ double Fourier::getSpeedVariance(const int64_t& tm) const
 }
 
 
-double Fourier::calCurAccel(const int64_t &startTimeStamp, const Clist &list) const
+double Fourier::calCurAccel(const int64_t &startTimeStamp, const int64_t& lastBestTimeStamp, const Clist &list) const
 {
-    std::vector<std::pair<int64_t, Cpos>> speed_ary;
-    list.readSpeed(speed_ary);
-    if (speed_ary.empty())
+    std::vector<std::pair<int64_t, Cpos>> pos_ary;
+    list.readXYAfter(pos_ary, startTimeStamp);
+    if (pos_ary.empty())
         return 0;
 
 
-    Cpos low_temp = (speed_ary.begin() + 1)->second;
-    Cpos max_temp = 0;
+    Cpos low_temp = (pos_ary.begin()+1)->second, max_temp = pos_ary.back().second;
+    int64_t curTime = (pos_ary.begin()+1)->first, endTIme = pos_ary.back().first;
 
-    int64_t curTime;
-    int64_t endTime;
-    curTime = endTime = speed_ary.front().first;
-
-    for (auto it = speed_ary.begin() + 1; it->first > startTimeStamp && it != speed_ary.end() - 1; it++)
+    double area1 = 0, area2 = 0;
+    double stdArea = (curTime - endTIme) * (max_temp.y - low_temp.y) / 2;
+    for (auto it = pos_ary.begin() + 2; it != pos_ary.end(); it++)
     {  
-        if (it->second.norm() > max_temp.norm())
-        {
-            endTime = it->first;
-            max_temp = it->second;
-        }
+        area1 += (curTime - it->first + curTime - (it - 1)->first) * (it->second.y - (it - 1)->second.y) / 2;
+        //area2 += (max_temp.y - it->second.y + max_temp.y - (it - 1)->second.y) * ((it - 1)->first - it->first) / 2;
     }
-    double speed = (max_temp - low_temp).norm();
-    return 1e6 * speed / (curTime - endTime);
+    //std::cout << "std: " << stdArea << " area: " << area1 << " " << area2 << " porportion: "<< area1 / stdArea << std::endl;
+
+    return area1 / stdArea;
 
 }
 
-double Fourier::calCurAccel(const int64_t& startTimeStamp) const
+double Fourier::calCurAccel(const int64_t& startTimeStamp, const int64_t& lastBeatTimeStamp) const
+{
+    std::vector<std::pair<int64_t, Cpos>> pos_ary;
+    data_list.readXYAfter(pos_ary, startTimeStamp);
+    if (pos_ary.empty())
+        return 0;
+
+
+    Cpos low_temp = (pos_ary.begin() + 1)->second, max_temp = pos_ary.back().second;
+    int64_t curTime = (pos_ary.begin() + 1)->first, endTIme = pos_ary.back().first;
+
+    double area1 = 0, area2 = 0;
+    double stdArea = (curTime - lastBeatTimeStamp) * (max_temp.y - low_temp.y) / 4;
+    for (auto it = pos_ary.begin() + 2; it != pos_ary.end(); it++)
+    {
+        area1 += (curTime - it->first + curTime - (it - 1)->first) * (it->second.y - (it - 1)->second.y) / 2;
+        //area2 += (max_temp.y - it->second.y + max_temp.y - (it - 1)->second.y) * ((it - 1)->first - it->first) / 2;
+    }
+    //std::cout << "std: " << stdArea << " area: " << area1 << " " << area2 << " porportion: "<< area1 / stdArea << std::endl;
+
+    return area1 / stdArea;
+
+
+}
+
+double Fourier::calCurAcceld(const int64_t& startTimeStamp, const int64_t& lastBeatTimeStamp) const
 {
     std::vector<std::pair<int64_t, Cpos>> speed_ary;
     data_list.readSpeed(speed_ary);
@@ -214,7 +235,7 @@ double Fourier::calCurAccel(const int64_t& startTimeStamp) const
 
     int64_t curTime;
     int64_t endTime;
-    curTime = endTime = speed_ary.front().first;
+    curTime = endTime = (speed_ary.begin()+1)->first;
 
     for (auto it = speed_ary.begin() + 1; it->first > startTimeStamp && it != speed_ary.end() - 1; it++)
     {
@@ -224,8 +245,9 @@ double Fourier::calCurAccel(const int64_t& startTimeStamp) const
             max_temp = it->second;
         }
     }
-    double speed = (max_temp.norm() - low_temp.norm());
-    return 1e6 * speed / (curTime - endTime);
+    //double speed = (max_temp.norm() - low_temp.norm());
+    double speed = max_temp.norm();
+    return  (curTime - lastBeatTimeStamp) * speed / (curTime - endTime) ;
 
 }
 
@@ -237,18 +259,38 @@ bool Fourier::freqAvalible()
 }
 
 
-double Fourier::calHightRatio() const
+double Fourier::calHightRatio(const double &amp) const
 {
-    std::vector<double> hight_list;
-    data_list.readY(hight_list);
-    double min, max;
-    if (hight_list.empty())
+    std::vector<double> height_list;
+    data_list.readY(height_list);
+    /*if (height_list.empty())
         return 0;
-    min = max = hight_list.front();
-    for (auto hight : hight_list)
+    double temp = height_list.front();
+    for (auto height : height_list)
     {
-        if (hight < min) min = hight;
-        if (hight > max) max = hight;
+        if (height > temp) break;
+        else temp = height;
+    }*/
+    return (height_list.front()) / amp;
+}
+
+Cpos Fourier::calFingerAmp(const int64_t& startTimeStamp, const Clist &list) const
+{
+    std::vector<std::pair<int64_t, Cpos>> speed_ary;
+    list.readXYAfter(speed_ary, startTimeStamp);
+    if (speed_ary.size() < 2)
+        return 0;
+
+    Cpos low_temp = (speed_ary.begin() + 1)->second;
+    Cpos max_temp = low_temp;
+
+    for (auto it = speed_ary.begin() + 1; it != speed_ary.end(); it++)
+    {
+        if ((it->second - low_temp).norm() > (max_temp - low_temp).norm())
+        {
+            max_temp = it->second;
+        }
     }
-    return (hight_list.front() - min) / (max - min);
+    //std::cout << "amp: " << (max_temp - low_temp).norm() << std::endl;
+    return max_temp - low_temp;
 }

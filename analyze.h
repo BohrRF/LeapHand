@@ -21,36 +21,37 @@ public:
     Fourier fft;
     control con;
     int64_t lastPeakTimeStamp;
-    int beats;
-    int64_t startTimePoint;
-    bool isLowest;
-    bool isHighest;  
+    int64_t lastBeatTimeStamp;
+    int beats = 0;
+    int64_t startTimePoint = 0;
+    bool isLowest = false;
+    bool isHighest = false;  
     node ptr;
-    float hand_peak;
+    double hand_peak;
     fstream fp;
+    fstream fp_beat;
     Clist fingerPosList;
 
     void showFrameInfo(const Controller& controller);
-    beatAnalyze() : 
-        beats(0), 
-        startTimePoint(0), 
-        isLowest(false), 
-        isHighest(0), 
-        fft(N), 
-        hand_peak(0), 
-        fingerPosList(N)
+    beatAnalyze(string LOGFILE) : fft(N), fingerPosList(N)
     {
-        con.initial_music();
-        fp.open("soft.txt", std::ios::out);
+        fp.open(LOGFILE + ".txt", std::ios::out);
         if(!fp)
         {
-            std::cerr << "Log file could not be open." << std::endl;
+            std::cerr << "Log file "<< LOGFILE << " could not be open." << std::endl;
+            exit(0);
+        }
+        fp_beat.open(LOGFILE + "1.txt", std::ios::out);
+        if (!fp)
+        {
+            std::cerr << "Log file " << LOGFILE << " could not be open." << std::endl;
             exit(0);
         }
     }
     ~beatAnalyze()
     {
         fp.close();
+        fp_beat.close();
     }
 };
 
@@ -66,6 +67,7 @@ public:
     virtual void onDeviceChange(const Controller&);
     virtual void onServiceConnect(const Controller&);
     virtual void onServiceDisconnect(const Controller&);
+    SampleListener(string LOGFILE) : beatAnalyze(LOGFILE){}
     /*
     void refreshGraph(const double &x, const double &y);
     
