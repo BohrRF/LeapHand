@@ -314,12 +314,8 @@ void control::onBeat(const int64_t& TimeStamp, const double& hand_amp, const dou
     /*
     fft.FFT();
     std::vector<std::pair<double, double>> maxlist;
-
     fft.find_max_freq(maxlist); // 0 Hz amplitude was eliminated from this list
-
-
     //cout << "cur time: " << curTimeStamp << " period: " << 8LL * 1000000 / maxlist[0] << '\n';
-
     for (int i = 0; i < 5; i++)
     {
         printf("%f, %f\n", 60 * maxlist[i].first, maxlist[i].second);
@@ -347,7 +343,7 @@ void control::onBeat(const int64_t& TimeStamp, const double& hand_amp, const dou
     //            nextBeatTimeStamp = TimeStamp + (nextBeatTimeStamp - TimeStamp) * (curBpm / (curBpm + speedBias));
     //            curBpm = curBpm + speedBias;
 
-                    speedBias = -handBpm * handBpm * dif / (60 * gearFactor);
+                    speedBias = -handBpm * handBpm * dif / (0.001 * timeOffset * handBpm + 60 * gearFactor);
 
                     curNodeTimeStamp = TimeStamp + (curNodeTimeStamp - TimeStamp) * (curBpm / (handBpm + speedBias));
                     nextBeatTimeStamp = TimeStamp + (nextBeatTimeStamp - TimeStamp) * (curBpm / (handBpm + speedBias));
@@ -1846,5 +1842,3 @@ int control::readMIDI(std::string FILENAME)
     _getch();
     return 0;
 }
-
-
